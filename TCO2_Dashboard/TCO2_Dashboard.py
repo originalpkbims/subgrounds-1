@@ -95,17 +95,12 @@ app.layout=html.Div([
   html.H1("Last 7 Days Performance")]
   ,style ={'textAlign': 'center','padding':'5%', 'color':colors['kg_color_sub'],'font-size':'150%'}),
   html.Div([dcc.Graph(figure=fig_seven_day_plots)],style={'color':'white'}),
-  html.Div([html.H2("Where have the past 7-day credits originated from?")]
-  ,style ={'textAlign': 'center','padding':'1%', 'color':colors['kg_color_sub2'],'font-size':'120%'}),
-  html.Div([dcc.Graph(figure=fig_seven_day_map)],
-  style ={'title':'abc','textAlign': 'center','padding':'1%', 'color':'deeppink','font-size':'120%'}),
+  html.Div([dcc.Graph(figure=fig_seven_day_map)]),
 
 html.Div([
   html.H1("Last 30 Days Performance")]
   ,style ={'textAlign': 'center','padding':'5%', 'color':colors['kg_color_sub'],'font-size':'150%'}),
   html.Div([dcc.Graph(figure=fig_thirty_day_plots)]),
-  html.Div([html.H2("Where have the past 30-day credits originated from?")]
-  ,style ={'textAlign': 'center','padding':'1%', 'color':colors['kg_color_sub2'],'font-size':'120%'}),
   html.Div([dcc.Graph(figure=fig_thirty_day_map)]),
 
 html.Div([
@@ -113,19 +108,10 @@ html.Div([
   ,style ={'textAlign': 'center','padding':'5%', 'color':colors['kg_color_sub'],'font-size':'150%'})]),
   html.Div([dcc.Graph(figure=fig_total_plots)]),
   
-  html.Div([html.H2("Where have all the past credits originated from?")]
-  ,style ={'textAlign': 'center','padding':'1%', 'color':colors['kg_color_sub2'],'font-size':'120%'}),
   html.Div([dcc.Graph(figure=fig_total_map)]),
+
+  html.Div([dcc.Graph(figure=fig_total_region)]),
   
-  html.Div([html.H2("What is the trend of Tokenized Credits Volume (Weekly)?")]
-  ,style ={'textAlign': 'center','color':colors['kg_color_sub2'],'font-size':'120%'}),
-  html.Div([html.H2("Which Regions' carbon credits are consistently tokenized? Which Regions' carbon credits are recently tokenized?")]
-  ,style ={'textAlign': 'center','color':colors['kg_color_sub2'],'font-size':'120%'}),
-  html.Div([dcc.Graph(figure=fig_total_region)]
-  ,style ={'padding':'1%'}),
-  
-  html.Div([html.H2("Methodology Distribution with respect to Region")]
-  ,style ={'textAlign': 'center','padding':'1%', 'color':colors['kg_color_sub2'],'font-size':'120%'}), 
   html.Div([dcc.Graph(figure=fig_total_metho)]),
   html.Div([dcc.Graph(figure=fig_metho_description)])
 ],

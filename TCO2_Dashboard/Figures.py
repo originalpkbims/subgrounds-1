@@ -78,8 +78,14 @@ def map(df,num):
                     hover_name='Region',
                     color_continuous_scale = px.colors.sequential.Plasma,
                     height=600)
-                    # title=f"Where have the past {num}d credits originated from?")
-    fig.update_layout(font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
+    
+    fig.update_layout(title=dict(
+    text=f'Where have the past {num}-day credits originated from?',
+    x=0.5,
+    font=dict(
+        color=colors['kg_color_sub2']
+    )),
+    font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
     return fig
 
 
@@ -142,8 +148,10 @@ def total_map(df):
                     hover_name='Region',
                     color_continuous_scale = px.colors.sequential.Plasma,
                     height=600)
-                    # title=f"Where have all the past credits originated from?")
-    fig.update_layout(font_color='white',title_x=0.5,dragmode=False,paper_bgcolor=colors['bg_color'])
+
+    fig.update_layout(title=dict(text="Where have all the past credits originated from?",
+    x=0.5,font=dict(color=colors['kg_color_sub2'])),
+    font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
     return fig
 
 def region_volume_vs_date(df):
@@ -170,7 +178,8 @@ def region_volume_vs_date(df):
     for i in lst_reg_Quantity:
         fig.add_trace(go.Bar(x=qty_vs_date['Bridging Date'],y=qty_vs_date[i],name=i.replace("_Quantity","")))
 
-    fig.update_layout(font_color='white',
+    fig.update_layout(title=dict(text="What is the trend of Tokenized Credits Volume (Weekly)? <br> Which Regions' carbon credits are consistently tokenized? <br> Which Regions' carbon credits are recently tokenized? <br>",
+    x=0.5,y=0.95,font=dict(color=colors['kg_color_sub2'])),font_color='white',
                         xaxis_title = 'Date',
                         yaxis_title = 'Volume',
                     barmode='stack',
@@ -189,7 +198,6 @@ def methodology_volume_vs_region(df):
         df.loc[df["Methodology"]==i,i+'_ind'] = 1
         df[i+"_Quantity"] = df["Quantity"] * df[i+'_ind']
 
-
     lst_metho_Quantity = [i+"_Quantity" for i in lst_metho]
     qty_vs_region = df.groupby('Region')[["Quantity"] + lst_metho_Quantity].sum().reset_index()
 
@@ -199,13 +207,15 @@ def methodology_volume_vs_region(df):
     for i in lst_metho_Quantity:
         fig.add_trace(go.Bar(x=qty_vs_region['Region'],y=qty_vs_region[i],name=i.replace("_Quantity","")))
 
-    fig.update_layout(font_color='white',
+    fig.update_layout(title=dict(text="Methodology Distribution with respect to Region",
+    x=0.5,font=dict(color=colors['kg_color_sub2'])),font_color='white',
                         xaxis_title = 'Region',
                         yaxis_title = 'Volume',
                         barmode='stack',
                         paper_bgcolor=colors['bg_color'])
 
     return fig
+
 
 def methodology_table(metho_dict):
     fig=go.Figure(data = [go.Table(header = dict(values=['Methodology','Methodology Description']),
@@ -217,7 +227,7 @@ def methodology_table(metho_dict):
         font=dict(
             color=colors['kg_color_sub2']
         )),
-    paper_bgcolor=colors['bg_color'])
+        paper_bgcolor=colors['bg_color'])
 
 
 
