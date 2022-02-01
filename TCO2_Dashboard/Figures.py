@@ -1,4 +1,8 @@
 
+from distutils.errors import CCompilerError
+from re import template
+from tkinter import font
+from unicodedata import name
 import pandas as pd
 from subgrounds.subgrounds import to_dataframe
 import plotly.express as px
@@ -8,6 +12,7 @@ import pycountry
 from collections import defaultdict
 from helpers import add_px_figure 
 from plotly.subplots import make_subplots
+from colors import colors
 
 from subgrounds.subgrounds import Subgrounds
 
@@ -16,24 +21,27 @@ def sub_plots(sd_pool,last_sd_pool,num):
         rows=2, 
         cols=2,
         specs=[[{"type":"domain"}, {"type":"domain"}],[{"type":"xy"}, {"type":"xy"}]],
+        subplot_titles=("", "", "Tokenization Volumes By Day", f"Distribution of Vintages ({num}d)"),
         vertical_spacing=0.1,
-        subplot_titles=("", "", "Tokenization Volumes By Day", f"Distribution of Vintages ({num}d)")
         )
+    
+    
+    fig.update_layout(font_color='white')
 
     fig.add_trace(go.Indicator(
         mode = "number+delta",
         value = sum(sd_pool['Quantity']),
-        title=f"Credits tokenized ({num}d)",
-        number = {'suffix': " tCO2"},
+        title=dict(text =f"Credits tokenized ({num}d)"),
+        number = dict(suffix = " tCO2"),
         delta = {'position': "bottom", 'reference': sum(last_sd_pool['Quantity']), 'relative':True, 'valueformat':'.1%'},
         domain = {'x': [0, .5], 'y': [0.6, 1]}))
 
     fig.add_trace(go.Indicator(
         mode = "number+delta",
         value = np.average(sd_pool['Vintage'],weights=sd_pool['Quantity']),
-        number = {'valueformat': ".1f"},
+        number = dict(valueformat= ".1f"),
         delta = {"reference": np.average(last_sd_pool['Vintage'],weights=last_sd_pool['Quantity']), "valueformat": ".1f"},
-        title = {"text": f"Average Credit Vintage ({num}d)"},
+        title=dict(text =f"Average Credit Vintage ({num}d)"),
         domain = {'x': [.5,1],'y': [0.6, 1]}))
 
     add_px_figure(
@@ -41,11 +49,12 @@ def sub_plots(sd_pool,last_sd_pool,num):
             sd_pool.groupby("Bridging Date")['Quantity'].sum().reset_index(), 
             x="Bridging Date", 
             y="Quantity", 
-            title="Tokenization Volumes By Day"
+            title="Tokenization Volumes By Day",
             ),
         fig,
         row=2, col=1)
-
+    
+    
     add_px_figure(
         px.bar(
             sd_pool.groupby('Vintage')['Quantity'].sum().to_frame().reset_index(), 
@@ -56,7 +65,7 @@ def sub_plots(sd_pool,last_sd_pool,num):
         fig,
         row=2, col=2
     )
-    fig.update_layout(height=600)
+    fig.update_layout(height=600,paper_bgcolor=colors['bg_color'])
     return fig
  
 def map(df,num):
@@ -70,7 +79,7 @@ def map(df,num):
                     color_continuous_scale = px.colors.sequential.Plasma,
                     height=600)
                     # title=f"Where have the past {num}d credits originated from?")
-    fig.update_layout(dragmode=False)
+    fig.update_layout(font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
     return fig
 
 
@@ -82,19 +91,20 @@ def total_plots(sd_pool):
         vertical_spacing=0.1,
         subplot_titles=("", "", "Tokenization Volumes By Day", "Distribution of Vintages")
         )
+    fig.update_layout(font_color='white')
 
     fig.add_trace(go.Indicator(
         mode = "number",
         value = sum(sd_pool['Quantity']),
-        title="Credits tokenized (total)",
-        number = {'suffix': " tCO2"},
+        title=dict(text ="Credits tokenized (total)"),
+        number = dict(suffix = " tCO2"),
         domain = {'x': [0, .5], 'y': [0.6, 1]}))
 
     fig.add_trace(go.Indicator(
         mode = "number",
         value = np.average(sd_pool['Vintage'],weights=sd_pool['Quantity']),
-        number = {'valueformat': ".1f"},
-        title = {"text": f"Average Credit Vintage (total)"},
+        number = dict(valueformat= ".1f"),
+        title=dict(text ="Average Credit Vintage (total)"),
         domain = {'x': [.5,1],'y': [0.6, 1]}))
 
     add_px_figure(
@@ -117,7 +127,8 @@ def total_plots(sd_pool):
         fig,
         row=2, col=2
     )
-    fig.update_layout(height=600)
+
+    fig.update_layout(height=600,paper_bgcolor=colors['bg_color'])
     return fig
 
 
@@ -132,7 +143,7 @@ def total_map(df):
                     color_continuous_scale = px.colors.sequential.Plasma,
                     height=600)
                     # title=f"Where have all the past credits originated from?")
-    fig.update_layout(title_x=0.5,dragmode=False)
+    fig.update_layout(font_color='white',title_x=0.5,dragmode=False,paper_bgcolor=colors['bg_color'])
     return fig
 
 def region_volume_vs_date(df):
@@ -159,11 +170,12 @@ def region_volume_vs_date(df):
     for i in lst_reg_Quantity:
         fig.add_trace(go.Bar(x=qty_vs_date['Bridging Date'],y=qty_vs_date[i],name=i.replace("_Quantity","")))
 
-    fig.update_layout(
+    fig.update_layout(font_color='white',
                         xaxis_title = 'Date',
                         yaxis_title = 'Volume',
-                    barmode='stack')
-
+                    barmode='stack',
+                    paper_bgcolor=colors['bg_color'])
+    
 
     return fig
 
@@ -183,23 +195,29 @@ def methodology_volume_vs_region(df):
 
     #Methodology_Quantity vs Region
     fig=go.Figure()
-    fig.add_trace(go.Scatter(x=qty_vs_region['Region'],y=qty_vs_region['Quantity'],name="Volume"))
+    fig.add_trace(go.Scatter(x=qty_vs_region['Region'],y=qty_vs_region['Quantity'],name="Volume",textfont=dict(color='red')))
     for i in lst_metho_Quantity:
         fig.add_trace(go.Bar(x=qty_vs_region['Region'],y=qty_vs_region[i],name=i.replace("_Quantity","")))
 
-    fig.update_layout(
+    fig.update_layout(font_color='white',
                         xaxis_title = 'Region',
                         yaxis_title = 'Volume',
-                    barmode='stack')
-
+                        barmode='stack',
+                        paper_bgcolor=colors['bg_color'])
 
     return fig
 
 def methodology_table(metho_dict):
     fig=go.Figure(data = [go.Table(header = dict(values=['Methodology','Methodology Description']),
     cells=dict(values=[list(metho_dict.keys()),list(metho_dict.values())]))])
-    fig.update_layout(title='Methodology Brief Description',
-    title_x=0.5)
+    
+    fig.update_layout(title=dict(
+        text='Methodology Brief Description',
+        x=0.5,
+        font=dict(
+            color=colors['kg_color_sub2']
+        )),
+    paper_bgcolor=colors['bg_color'])
 
 
 
