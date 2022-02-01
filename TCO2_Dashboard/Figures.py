@@ -1,7 +1,7 @@
 
 from distutils.errors import CCompilerError
 from re import template
-from tkinter import font
+# from tkinter import _Padding, font
 from unicodedata import name
 import pandas as pd
 from subgrounds.subgrounds import to_dataframe
@@ -12,7 +12,7 @@ import pycountry
 from collections import defaultdict
 from helpers import add_px_figure 
 from plotly.subplots import make_subplots
-from colors import colors
+from colors import colors, fonts
 
 from subgrounds.subgrounds import Subgrounds
 
@@ -83,7 +83,8 @@ def map(df,num):
     text=f'Where have the past {num}-day credits originated from?',
     x=0.5,
     font=dict(
-        color=colors['kg_color_sub2']
+        color=colors['kg_color_sub2'],
+        size=fonts['figure']
     )),
     font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
     return fig
@@ -150,7 +151,7 @@ def total_map(df):
                     height=600)
 
     fig.update_layout(title=dict(text="Where have all the past credits originated from?",
-    x=0.5,font=dict(color=colors['kg_color_sub2'])),
+    x=0.5,font=dict(color=colors['kg_color_sub2'],size=fonts['figure'])),
     font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
     return fig
 
@@ -178,14 +179,13 @@ def region_volume_vs_date(df):
     for i in lst_reg_Quantity:
         fig.add_trace(go.Bar(x=qty_vs_date['Bridging Date'],y=qty_vs_date[i],name=i.replace("_Quantity","")))
 
-    fig.update_layout(title=dict(text="What is the trend of Tokenized Credits Volume (Weekly)? <br> Which Regions' carbon credits are consistently tokenized? <br> Which Regions' carbon credits are recently tokenized? <br>",
-    x=0.5,y=0.95,font=dict(color=colors['kg_color_sub2'])),font_color='white',
+    fig.update_layout(title=dict(text="What is the trend of Tokenized Credits Volume (Weekly)? <br> Which Regions' carbon credits are consistently tokenized? <br> Which Regions' carbon credits are recently tokenized?",
+    x=0.5,y=0.95,font=dict(color=colors['kg_color_sub2'],size=fonts['figure'])),font_color='white',
                         xaxis_title = 'Date',
                         yaxis_title = 'Volume',
                     barmode='stack',
-                    paper_bgcolor=colors['bg_color'])
-    
-
+                    paper_bgcolor=colors['bg_color']
+                )
     return fig
 
 def methodology_volume_vs_region(df):
@@ -208,7 +208,7 @@ def methodology_volume_vs_region(df):
         fig.add_trace(go.Bar(x=qty_vs_region['Region'],y=qty_vs_region[i],name=i.replace("_Quantity","")))
 
     fig.update_layout(title=dict(text="Methodology Distribution with respect to Region",
-    x=0.5,font=dict(color=colors['kg_color_sub2'])),font_color='white',
+    x=0.5,font=dict(color=colors['kg_color_sub2'],size=fonts['figure'])),font_color='white',
                         xaxis_title = 'Region',
                         yaxis_title = 'Volume',
                         barmode='stack',
@@ -225,7 +225,7 @@ def methodology_table(metho_dict):
         text='Methodology Brief Description',
         x=0.5,
         font=dict(
-            color=colors['kg_color_sub2']
+            color=colors['kg_color_sub2'],size=20
         )),
         paper_bgcolor=colors['bg_color'])
 

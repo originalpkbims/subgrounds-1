@@ -11,7 +11,7 @@ from helpers import (pct_change, date_manipulations, black_list_manipulations,
 from Figures import *
 from subgrounds.subgrounds import Subgrounds
 from data_related_constants import methodology_dict, rename_map
-from colors import colors
+from colors import colors, fonts
 
 sg = Subgrounds()
 carbon_data = sg.load_subgraph('https://api.thegraph.com/subgraphs/name/cujowolf/polygon-bridged-carbon')
@@ -74,45 +74,44 @@ app = dash.Dash(__name__)
 app.layout=html.Div([
   html.Div([
   html.H1("Toucan Carbon Credits Dashboard")]
-  ,style ={'textAlign': 'center','padding':'3%','color':colors['kg_color'], 'font-size':'180%'}),
-
+  ,style ={'textAlign': 'center','padding-top':'96px','color':colors['kg_color'],'font-size':fonts['heading']}),
 
   html.Div([
   html.H1("Summary")]
-  ,style ={'textAlign': 'center','padding':'5%','color':colors['kg_color_sub'],'font-size':'150%'}),
+  ,style ={'textAlign': 'center','padding-top':'96px','color':colors['kg_color_sub'],'font-size':fonts['sub_heading']}),
 
   html.Div([
   html.H2(f"There are {total_toucan_credits:,} Verra registry credits that have been tokenized by Toucan")]
-  ,style ={'textAlign': 'center','color':'white'}),
+  ,style ={'textAlign': 'center','color':'white','font-size':fonts['summary']}),
   html.Div([
   html.H2(f"The past 7 days has seen {sd_credits:,} credits get tokenized ({round(sd_change,1)}% change from last week)")]
-  ,style ={'textAlign': 'center','color':'white'}),
+  ,style ={'textAlign': 'center','color':'white','font-size':fonts['summary']}),
   html.Div([
   html.H2(f"The last 30 days has seen {td_credits:,} credits get tokenized ({round(td_change,1)}% change from previous 30 days)")]
-  ,style ={'textAlign': 'center','color':'white'}),
+  ,style ={'textAlign': 'center','color':'white','font-size':fonts['summary']}),
 
   html.Div([
   html.H1("Last 7 Days Performance")]
-  ,style ={'textAlign': 'center','padding':'5%', 'color':colors['kg_color_sub'],'font-size':'150%'}),
-  html.Div([dcc.Graph(figure=fig_seven_day_plots)],style={'color':'white'}),
-  html.Div([dcc.Graph(figure=fig_seven_day_map)]),
+  ,style ={'textAlign': 'center','padding-top':'96px', 'color':colors['kg_color_sub'],'font-size':fonts['sub_heading']}),
+  html.Div([dcc.Graph(figure=fig_seven_day_plots)]),
+  html.Div([dcc.Graph(figure=fig_seven_day_map)],style={'padding-top':'96px'}),
 
 html.Div([
   html.H1("Last 30 Days Performance")]
-  ,style ={'textAlign': 'center','padding':'5%', 'color':colors['kg_color_sub'],'font-size':'150%'}),
+  ,style ={'textAlign': 'center','padding-top':'96px', 'color':colors['kg_color_sub'],'font-size':fonts['sub_heading']}),
   html.Div([dcc.Graph(figure=fig_thirty_day_plots)]),
-  html.Div([dcc.Graph(figure=fig_thirty_day_map)]),
+  html.Div([dcc.Graph(figure=fig_thirty_day_map)],style={'padding-top':'96px'}),
 
 html.Div([
-  html.H1("Overall Performance"
-  ,style ={'textAlign': 'center','padding':'5%', 'color':colors['kg_color_sub'],'font-size':'150%'})]),
+  html.H1("Overall Performance")]
+  ,style ={'textAlign': 'center','padding-top':'96px', 'color':colors['kg_color_sub'],'font-size':fonts['sub_heading']}),
+  
   html.Div([dcc.Graph(figure=fig_total_plots)]),
-  
-  html.Div([dcc.Graph(figure=fig_total_map)]),
+  html.Div([dcc.Graph(figure=fig_total_map)],style={'padding-top':'96px'}),
 
-  html.Div([dcc.Graph(figure=fig_total_region)]),
+  html.Div([dcc.Graph(figure=fig_total_region)],style={'padding-top':'96px'}),
   
-  html.Div([dcc.Graph(figure=fig_total_metho)]),
+  html.Div([dcc.Graph(figure=fig_total_metho)],style={'padding-top':'96px'}),
   html.Div([dcc.Graph(figure=fig_metho_description)])
 ],
 style={'height':'100%','backgroundColor':colors['bg_color'],
