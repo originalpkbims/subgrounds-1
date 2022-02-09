@@ -232,3 +232,21 @@ def methodology_table(metho_dict):
 
 
     return fig
+
+
+def pool_pie_chart(df):
+    labels = ['BCT','Non BCT']
+    BCT = df['BCT Quantity'].sum()
+    Non_BCT = df['Quantity'].sum()-BCT
+    values = [BCT,Non_BCT]
+    fig = go.Figure()
+    fig.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent'
+                             ))
+    fig.update_layout(title=dict(
+        text='Composition of Carbon Pools',
+        x=0.5,
+        font=dict(
+            color=colors['kg_color_sub2'],size=20
+        )),
+        paper_bgcolor=colors['bg_color'])
+    return fig

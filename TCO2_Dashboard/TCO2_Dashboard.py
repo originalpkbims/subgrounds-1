@@ -55,7 +55,7 @@ fig_total_map = total_map(df)
 fig_total_region = region_volume_vs_date(df)
 fig_total_metho = methodology_volume_vs_region(df)
 fig_metho_description = methodology_table(methodology_dict)
-
+fig_pool_pie_chart = pool_pie_chart(df_carbon)
 
 # Dashboard
 app = dash.Dash(__name__)
@@ -106,7 +106,8 @@ html.Div([
   html.Div([dcc.Graph(figure=fig_total_region)],style={'padding-top':'96px'}),
   
   html.Div([dcc.Graph(figure=fig_total_metho)],style={'padding-top':'96px'}),
-  html.Div([dcc.Graph(figure=fig_metho_description)])
+  html.Div([dcc.Graph(figure=fig_metho_description)]),
+  html.Div([dcc.Graph(figure=fig_pool_pie_chart)])
 ],
 style={'height':'100%','backgroundColor':colors['bg_color'],
       'margin':'0',
