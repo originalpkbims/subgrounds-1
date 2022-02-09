@@ -38,22 +38,5 @@ def get_data():
 
     data = sg.execute(req)
     df = to_dataframe(data)
-
-    # carbon_offsets = carbon_data.Query.carbonOffsets(
-    # orderBy=carbon_data.CarbonOffset.lastUpdate,
-    # orderDirection='desc',
-    # first = 4999
-    # )
-
-    # req = sg.mk_request([
-    # carbon_offsets.tokenAddress,
-    # carbon_offsets.region,
-    # carbon_offsets.balanceBCT,
-    # carbon_offsets.totalBridged,
-    # ])s
-
-    # data = sg.execute(req)
-    # df_carbon = to_dataframe(data)
-    
     
     return df
