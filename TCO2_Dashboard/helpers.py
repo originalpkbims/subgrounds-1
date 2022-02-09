@@ -1,4 +1,4 @@
-from lib2to3.pgen2.pgen import DFAState
+
 import pandas as pd
 import datetime as dt
 
@@ -21,6 +21,11 @@ def add_px_figure(pxfig, layout, row, col):
     layout.append_trace(trace, row=row, col=col)
 
 
+def drop_duplicates(df):
+  df = df.drop_duplicates(subset=['carbonOffsets_tokenAddress'],keep='first')
+  df = df.reset_index(drop=True)
+  return df
+
 def date_manipulations(df):
     df["Bridging Date"] =pd.to_datetime(df["Bridging Date"],unit='s').dt.tz_localize(None).dt.floor('D').dt.date
     df["Vintage"] =pd.to_datetime(df["Vintage"],unit='s').dt.tz_localize(None).dt.year
@@ -36,6 +41,8 @@ def region_manipulations(df):
     df['Region'] = df['Region'].replace('South Korea', 'Korea, Republic of')
     #Belize country credits are categorized under Latin America. Confirmed this with Verra Registry 
     df['Region'] = df['Region'].replace('Latin America', 'Belize')
+    df['Region'] = df['Region'].replace('Oceania', 'Indonesia')
+    df['Region'] = df['Region'].replace('Asia', 'Cambodia')
     return df
 
 def subsets(df):

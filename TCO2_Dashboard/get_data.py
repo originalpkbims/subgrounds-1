@@ -17,6 +17,27 @@ def execute():
     sg = Subgrounds()
     carbon_data = sg.load_subgraph('https://api.thegraph.com/subgraphs/name/cujowolf/polygon-bridged-carbon')
 
+    bridges = carbon_data.Query.bridges(
+    orderBy=carbon_data.Bridge.timestamp,
+    orderDirection='desc',
+    first = 4999
+    )
+
+    req = sg.mk_request([
+    bridges.value,
+    bridges.timestamp,
+    bridges.offset.region,
+    bridges.offset.vintage,
+    bridges.offset.projectID,
+    bridges.offset.standard,
+    bridges.offset.methodology,
+    bridges.offset.tokenAddress,
+    bridges.offset.balanceBCT
+    ])
+
+    data = sg.execute(req)
+    df = to_dataframe(data)
+
     carbon_offsets = carbon_data.Query.carbonOffsets(
     orderBy=carbon_data.CarbonOffset.lastUpdate,
     orderDirection='desc',
@@ -28,11 +49,9 @@ def execute():
     carbon_offsets.region,
     carbon_offsets.balanceBCT,
     carbon_offsets.totalBridged,
-    carbon_offsets.bridges.value,
-    carbon_offsets.bridges.timestamp
     ])
 
     data = sg.execute(req)
     df_carbon = to_dataframe(data)
     
-    return df_carbon
+    return df,df_carbon

@@ -12,7 +12,7 @@ from subgrounds.subgrounds import Subgrounds
 from data_related_constants import methodology_dict, rename_map, rename_map_carbon
 from colors import colors, fonts
 
-def execute():
+def get_data():
                       
     sg = Subgrounds()
     carbon_data = sg.load_subgraph('https://api.thegraph.com/subgraphs/name/cujowolf/polygon-bridged-carbon')
@@ -26,6 +26,10 @@ def execute():
     req = sg.mk_request([
     carbon_offsets.tokenAddress,
     carbon_offsets.region,
+    carbon_offsets.vintage,
+    carbon_offsets.projectID,
+    carbon_offsets.standard,
+    carbon_offsets.methodology,
     carbon_offsets.balanceBCT,
     carbon_offsets.totalBridged,
     carbon_offsets.bridges.value,
@@ -33,6 +37,23 @@ def execute():
     ])
 
     data = sg.execute(req)
-    df_carbon = to_dataframe(data)
+    df = to_dataframe(data)
+
+    # carbon_offsets = carbon_data.Query.carbonOffsets(
+    # orderBy=carbon_data.CarbonOffset.lastUpdate,
+    # orderDirection='desc',
+    # first = 4999
+    # )
+
+    # req = sg.mk_request([
+    # carbon_offsets.tokenAddress,
+    # carbon_offsets.region,
+    # carbon_offsets.balanceBCT,
+    # carbon_offsets.totalBridged,
+    # ])s
+
+    # data = sg.execute(req)
+    # df_carbon = to_dataframe(data)
     
-    return df_carbon
+    
+    return df

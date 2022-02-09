@@ -1,4 +1,4 @@
-
+import imp
 import dash
 from dash import html
 from dash import dcc
@@ -6,48 +6,37 @@ from dash import dcc
 import pandas as pd
 from subgrounds.subgrounds import to_dataframe
 import datetime as dt
-from helpers import (pct_change, date_manipulations, black_list_manipulations, 
+from helpers import (pct_change,drop_duplicates, date_manipulations, black_list_manipulations, 
                     region_manipulations, subsets)
 from Figures import *
 from subgrounds.subgrounds import Subgrounds
-from data_related_constants import methodology_dict, rename_map
+from data_related_constants import methodology_dict, rename_map, rename_map_carbon
 from colors import colors, fonts
+# from get_data import execute
+from import_data import get_data
 
-sg = Subgrounds()
-carbon_data = sg.load_subgraph('https://api.thegraph.com/subgraphs/name/cujowolf/polygon-bridged-carbon')
+df = get_data()
 
-bridges = carbon_data.Query.bridges(
-  orderBy=carbon_data.Bridge.timestamp,
-  orderDirection='desc',
-)
-
-req = sg.mk_request([
-  bridges.value,
-  bridges.timestamp,
-  bridges.offset.region,
-  bridges.offset.vintage,
-  bridges.offset.projectID,
-  bridges.offset.standard,
-  bridges.offset.methodology,
-  bridges.offset.tokenAddress
-])
-
-data = sg.execute(req)
-df = to_dataframe(data)
+#drop duplicates data for BCT calculations
+df_carbon=drop_duplicates(df)
 
 #rename_columns
 df=df.rename(columns=rename_map)
+df_carbon=df_carbon.rename(columns=rename_map_carbon)
 #datetime manipulations
 df = date_manipulations(df)
 #Blacklist manipulations
 df = black_list_manipulations(df)
+df_carbon=black_list_manipulations(df_carbon)
 #Region manipulations
 df = region_manipulations(df)
 #7 day and 30 day subsets 
 sd_pool, last_sd_pool, td_pool, last_td_pool = subsets(df)
 
+
 #Summary
 total_toucan_credits = df['Quantity'].sum()
+total_BCT = df_carbon['BCT Quantity'].sum()
 sd_credits = sd_pool['Quantity'].sum()
 sd_change = pct_change(last_sd_pool['Quantity'].sum(),sd_credits)
 td_credits = td_pool['Quantity'].sum()
@@ -83,6 +72,11 @@ app.layout=html.Div([
   html.Div([
   html.H2(f"There are {total_toucan_credits:,} Verra registry credits that have been tokenized by Toucan")]
   ,style ={'textAlign': 'center','color':'white','font-size':fonts['summary']}),
+  
+  html.Div([
+  html.H2(f"There are {total_BCT:,} BCT credits that have been converted from TC02")]
+  ,style ={'textAlign': 'center','color':'white','font-size':fonts['summary']}),
+
   html.Div([
   html.H2(f"The past 7 days has seen {sd_credits:,} credits get tokenized ({round(sd_change,1)}% change from last week)")]
   ,style ={'textAlign': 'center','color':'white','font-size':fonts['summary']}),
