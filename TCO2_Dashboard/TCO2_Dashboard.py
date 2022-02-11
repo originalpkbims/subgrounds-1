@@ -10,29 +10,28 @@ from helpers import (pct_change,drop_duplicates, date_manipulations, black_list_
                     region_manipulations, subsets)
 from Figures import *
 from subgrounds.subgrounds import Subgrounds
-from data_related_constants import methodology_dict, rename_map, rename_map_carbon
+from data_related_constants import methodology_dict, rename_map
 from colors import colors, fonts
 # from get_data import execute
 from import_data import get_data
+from warnings import filterwarnings
+filterwarnings("ignore")
 
 df = get_data()
 
-#drop duplicates data for BCT calculations
-df_carbon=drop_duplicates(df)
-
 #rename_columns
 df=df.rename(columns=rename_map)
-df_carbon=df_carbon.rename(columns=rename_map_carbon)
 #datetime manipulations
 df = date_manipulations(df)
 #Blacklist manipulations
 df = black_list_manipulations(df)
-df_carbon=black_list_manipulations(df_carbon)
 #Region manipulations
 df = region_manipulations(df)
 #7 day and 30 day subsets 
 sd_pool, last_sd_pool, td_pool, last_td_pool = subsets(df)
 
+#drop duplicates data for BCT calculations
+df_carbon=drop_duplicates(df)
 
 #Summary
 total_toucan_credits = df['Quantity'].sum()
@@ -55,7 +54,8 @@ fig_total_map = total_map(df)
 fig_total_region = region_volume_vs_date(df)
 fig_total_metho = methodology_volume_vs_region(df)
 fig_metho_description = methodology_table(methodology_dict)
-fig_pool_pie_chart = pool_pie_chart(df_carbon)
+fig_pool_pie_chart,fig_eligible_pool_pie_chart = pool_pie_chart(df_carbon)
+# fig_eligible_pool_pie_chart = eligible_pool_pie_chart(df_carbon)
 
 # Dashboard
 app = dash.Dash(__name__)
@@ -107,7 +107,8 @@ html.Div([
   
   html.Div([dcc.Graph(figure=fig_total_metho)],style={'padding-top':'96px'}),
   html.Div([dcc.Graph(figure=fig_metho_description)]),
-  html.Div([dcc.Graph(figure=fig_pool_pie_chart)])
+  html.Div([dcc.Graph(figure=fig_pool_pie_chart)]),
+  html.Div([dcc.Graph(figure=fig_eligible_pool_pie_chart)])
 ],
 style={'height':'100%','backgroundColor':colors['bg_color'],
       'margin':'0',

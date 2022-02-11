@@ -1,6 +1,7 @@
 
 from distutils.errors import CCompilerError
 from re import template
+from tkinter import font
 # from tkinter import _Padding, font
 from unicodedata import name
 import pandas as pd
@@ -13,8 +14,35 @@ from collections import defaultdict
 from helpers import add_px_figure 
 from plotly.subplots import make_subplots
 from colors import colors, fonts
+from itertools import cycle
 
 from subgrounds.subgrounds import Subgrounds
+
+
+def indicator_subsets(sd_pool,last_sd_pool,num):
+
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+    mode = "number",
+    value = sum(sd_pool['Quantity']),
+    title=dict(text =f"Credits tokenized ({num}d)"),
+    number = dict(suffix = " tCO2",font=dict(size=100))))
+    fig.update_layout(height=600,paper_bgcolor=colors['bg_color'],font_color='white',font_size=100)
+
+    return fig
+
+def indicator_total(sd_pool):
+
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+        mode = "number",
+        value = sum(sd_pool['Quantity']),
+        title=dict(text ="Credits tokenized (total)"),
+        number = dict(suffix = " tCO2",font=dict(size=100))))
+    fig.update_layout(height=600,paper_bgcolor=colors['bg_color'],font_color='white')
+
+    return fig
+
 
 def sub_plots(sd_pool,last_sd_pool,num):
     fig = make_subplots(
@@ -35,6 +63,7 @@ def sub_plots(sd_pool,last_sd_pool,num):
         number = dict(suffix = " tCO2"),
         delta = {'position': "bottom", 'reference': sum(last_sd_pool['Quantity']), 'relative':True, 'valueformat':'.1%'},
         domain = {'x': [0, .5], 'y': [0.6, 1]}))
+    
 
     fig.add_trace(go.Indicator(
         mode = "number+delta",
@@ -158,7 +187,7 @@ def total_map(df):
 def region_volume_vs_date(df):
     #List of Regions
     lst_reg = list(df["Region"].value_counts().index[:])
-
+    palette = cycle(px.colors.cyclical.HSV)
     #Create Indicator and Quantity Columns
     for i in lst_reg:
         df[i+'_ind'] = 0
@@ -177,9 +206,9 @@ def region_volume_vs_date(df):
     fig=go.Figure()
     fig.add_trace(go.Scatter(x=qty_vs_date['Bridging Date'],y=qty_vs_date['Quantity'],name="Volume"))
     for i in lst_reg_Quantity:
-        fig.add_trace(go.Bar(x=qty_vs_date['Bridging Date'],y=qty_vs_date[i],name=i.replace("_Quantity","")))
+        fig.add_trace(go.Bar(x=qty_vs_date['Bridging Date'],y=qty_vs_date[i],name=i.replace("_Quantity",""),marker_color=next(palette)))
 
-    fig.update_layout(title=dict(text="What is the trend of Tokenized Credits Volume (Weekly)? <br> Which Regions' carbon credits are consistently tokenized? <br> Which Regions' carbon credits are recently tokenized?",
+    fig.update_layout(title=dict(text="What is the trend of Tokenized Credits Volume (Weekly)? <br> Which Regions' carbon credits are consistently tokenized?",
     x=0.5,y=0.95,font=dict(color=colors['kg_color_sub2'],size=fonts['figure'])),font_color='white',
                         xaxis_title = 'Date',
                         yaxis_title = 'Volume',
@@ -229,24 +258,58 @@ def methodology_table(metho_dict):
         )),
         paper_bgcolor=colors['bg_color'])
 
-
-
     return fig
 
 
 def pool_pie_chart(df):
-    labels = ['BCT','Non BCT']
+    labels = ['BCT','Non_BCT']
     BCT = df['BCT Quantity'].sum()
-    Non_BCT = df['Quantity'].sum()-BCT
+    Non_BCT = df['Bridged Quantity'].sum()-BCT
     values = [BCT,Non_BCT]
     fig = go.Figure()
     fig.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent'
                              ))
     fig.update_layout(title=dict(
-        text='Composition of Carbon Pools',
+        text='BCT Composition based on Eligible TCO2',
+        x=0.5,
+        font=dict(
+            color=colors['kg_color_sub2'],size=20
+        )),
+        paper_bgcolor=colors['bg_color'])
+
+    labels = ['BCT','Non_BCT']
+    df = df[df["Vintage"]>=2008].reset_index()
+    BCT = df['BCT Quantity'].sum()
+    Non_BCT = df['Bridged Quantity'].sum()-BCT
+    values = [BCT,Non_BCT]
+    fig_eligible=go.Figure()
+    fig_eligible.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent'
+                             ))
+    fig_eligible.update_layout(title=dict(
+        text='How much of Eligible TCO2 is exchanged for BCT?',
+        x=0.5,
+        font=dict(
+            color=colors['kg_color_sub2'],size=20
+        )),
+        paper_bgcolor=colors['bg_color'])
+
+    return fig, fig_eligible
+
+def eligible_pool_pie_chart(df):
+    df = df[df["Vintage"]>=2008].reset_index()
+    labels = ['BCT','Non BCT ']
+    BCT = df['BCT Quantity'].sum()
+    Non_BCT = df['Bridged Quantity'].sum()-BCT
+    values = [BCT,Non_BCT]
+    fig = go.Figure()
+    fig.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent'
+                             ))
+    fig.update_layout(title=dict(
+        text='BCT Composition based on Eligible TCO2',
         x=0.5,
         font=dict(
             color=colors['kg_color_sub2'],size=20
         )),
         paper_bgcolor=colors['bg_color'])
     return fig
+

@@ -21,7 +21,7 @@ def add_px_figure(pxfig, layout, row, col):
 
 
 def drop_duplicates(df):
-  df = df.drop_duplicates(subset=['carbonOffsets_tokenAddress'],keep='first')
+  df = df.drop_duplicates(subset=['Token Address'],keep='first')
   df = df.reset_index(drop=True)
   return df
 

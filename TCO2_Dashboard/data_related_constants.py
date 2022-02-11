@@ -13,13 +13,6 @@ methodology_dict={
     'ACM0018' : 'Methodology for Electricity generation from biomass in power-only plants'
 }
 
-rename_map_carbon = {
-'carbonOffsets_tokenAddress':'Token Address',
-'carbonOffsets_balanceBCT':'BCT Quantity',
-'carbonOffsets_totalBridged':'Quantity',
-'carbonOffsets_region':'Region',
-}
-
 rename_map = {
 'carbonOffsets_bridges_value':'Quantity',
 'carbonOffsets_bridges_timestamp':'Bridging Date',
@@ -29,5 +22,6 @@ rename_map = {
 'carbonOffsets_standard':'Standard',
 'carbonOffsets_methodology':'Methodology',
 'carbonOffsets_tokenAddress':'Token Address',
-'carbonOffsets_balanceBCT':'BCT Quantity'
+'carbonOffsets_balanceBCT':'BCT Quantity',
+'carbonOffsets_totalBridged':'Bridged Quantity',
 }
