@@ -21,6 +21,7 @@ def get_data():
     carbon_offsets.standard,
     carbon_offsets.methodology,
     carbon_offsets.balanceBCT,
+    # carbon_offsets.balanceNCT,
     carbon_offsets.totalBridged,
     carbon_offsets.bridges.value,
     carbon_offsets.bridges.timestamp
