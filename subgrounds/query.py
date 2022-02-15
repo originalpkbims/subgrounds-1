@@ -2,9 +2,13 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from functools import partial, reduce
+from re import L
 from typing import Any, Callable, Optional, Tuple
 from pipe import map, traverse, where, take, take_while
 import math
+
+import logging
+logger = logging.getLogger('subgrounds')
 
 from subgrounds.schema import (
   TypeMeta,
@@ -12,8 +16,7 @@ from subgrounds.schema import (
   TypeRef,
   typeref_of_input_field
 )
-from subgrounds.utils import filter_none, identity, rel_complement, union
-import subgrounds.client as client
+from subgrounds.utils import extract_data, filter_none, identity, rel_complement, union
 
 
 # ================================================================
@@ -203,22 +206,40 @@ class Selection:
         )
         return f"{indent}{alias_str}{self.fmeta.name}{self.args_graphql} {{\n{inner_str}\n{indent}}}"
 
+  @property
+  def data_path(self) -> list[str]:
+    match self:
+      case Selection(TypeMeta.FieldMeta(name), None, _, []) | Selection(TypeMeta.FieldMeta(_), name, _, []):
+        return [name]
+      case Selection(TypeMeta.FieldMeta(name), None, _, [inner_select, *_]) | Selection(TypeMeta.FieldMeta(_), name, _, [inner_select, *_]):
+        return [name] + inner_select.data_path
+    # return list(self.path | map(lambda ele: FieldPath.hash(ele[1].name + str(ele[0])) if ele[0] != {} and ele[0] is not None else ele[1].name))
+
   @staticmethod
-  def add_selections(select: Selection, new_selections: list[Selection]) -> Selection:
+  def split(select: Selection) -> list[Selection]:
+    match select:
+      case Selection(_, _, _, [] | None):
+        return [select]
+      case Selection(fmeta, alias, args, inner_select):       
+        return list(inner_select | map(Selection.split) | traverse | map(lambda inner_select: Selection(fmeta, alias, args, inner_select)))
+
+  def extract_data(self, data: dict | list[dict]) -> list[Any] | Any:
+    return extract_data(self.data_path, data)
+
+  def add_selections(self: Selection, new_selections: list[Selection]) -> Selection:
     return Selection(
-      fmeta=select.fmeta,
-      alias=select.alias,
+      fmeta=self.fmeta,
+      alias=self.alias,
       selection=union(
-        select.selection,
+        self.selection,
         new_selections,
         key=lambda select: select.fmeta.name,
         combine=Selection.combine
       )
     )
 
-  @staticmethod
-  def add_selection(select: Selection, new_selection: Selection) -> Selection:
-    return Selection.add_selections(select, [new_selection])
+  def add_selection(self: Selection, new_selection: Selection) -> Selection:
+    return self.add_selections([new_selection])
 
   @staticmethod
   def remove_selections(select: Selection, selections_to_remove: list[Selection]) -> Selection:
@@ -262,6 +283,17 @@ class Selection:
     )
 
   @staticmethod
+  def consolidate(selections: list[Selection]) -> list[Selection]:
+    def f(selections: list[Selection], other: Selection) -> list[Selection]:
+      try:
+        next(selections | where(lambda select: select.key == other.key))
+        return list(selections | map(lambda select: Selection.combine(select, other) if select.key == other.key else select))
+      except StopIteration:
+        return selections + [other]
+
+    return reduce(f, selections, [])
+
+  @staticmethod
   def contains(select: Selection, other: Selection) -> bool:
     if (select.fmeta == other.fmeta and rel_complement(other.selection, select.selection, key=lambda s: s.fmeta.name) == []):
       return all(
@@ -285,7 +317,11 @@ class Selection:
       return next(select.arguments | where(lambda arg: arg.name == target))
     except StopIteration:
       try:
-        return next(select.selection | map(partial(Selection.get_argument, target=target)))
+        return next(
+          select.selection 
+          | map(partial(Selection.get_argument, target=target))
+          | where(lambda x: x is not None)
+        )
       except StopIteration:
         return None
 
@@ -305,19 +341,18 @@ class Selection:
       )
     )
 
-  @staticmethod
-  def select(select: Selection, other: Selection) -> Selection:
+  def select(self: Selection, other: Selection) -> Selection:
     if other.selection == []:
-      return select
+      return self
     else:
       return Selection(
-        fmeta=select.fmeta,
-        alias=select.alias,
-        arguments=select.arguments,
+        fmeta=self.fmeta,
+        alias=self.alias,
+        arguments=self.arguments,
         selection=list(
           other.selection
           | map(lambda s: next(
-            select.selection
+            self.selection
             | where(lambda s_: s_.fmeta.name == s.fmeta.name)
             | map(lambda s_: Selection.select(s_, s))
             | take(1)
@@ -354,26 +389,25 @@ class Query:
     if len(self.variables) > 0:
       args_str = f'({", ".join([vardef.graphql for vardef in self.variables])})'
     else:
-      args_str = ""
+      args_str = ''
 
-    return f"""query{args_str} {{\n{selection_str}\n}}"""
+    return f'query{args_str} {{\n{selection_str}\n}}'
 
-  @staticmethod
-  def add_selections(query: Query, new_selections: list[Selection]) -> Query:
+  def add_selections(self: Query, new_selections: list[Selection]) -> Query:
     """ Returns a new Query containing all selections in 'query' along with
     the new selections in `new_selections`
 
     Args:
-      query (Query): The query to which new selections are to be added
+      self (Query): The query to which new selections are to be added
       new_selections (list[Selection]): The new selections to be added to the query
 
     Returns:
       Query: A new `Query` objects containing all selections
     """
     return Query(
-      name=query.name,
+      name=self.name,
       selection=union(
-        query.selection,
+        self.selection,
         new_selections,
         key=lambda select: select.key,
         combine=Selection.combine
@@ -506,11 +540,10 @@ class Query:
     variable_f: Callable[[VariableDefinition], VariableDefinition] = identity,
     selection_f: Callable[[Selection], Selection] = identity
   ) -> Query:
-    return Query(
+    return reduce(Query.add_selection, query.selection | map(selection_f) | traverse, Query(
       name=query.name,
-      selection=list(query.selection | map(selection_f) | traverse),
       variables=list(query.variables | map(variable_f) | traverse)
-    )
+    ))
 
   @staticmethod
   def contains_selection(query: Query, selection: Selection) -> bool:
@@ -634,7 +667,7 @@ class Document:
 
   # A list of variable assignments. For non-repeating queries
   # the list would be of length 1 (i.e.: only one set of query variable assignments)
-  variables: list[dict[str, Any]] = field(default_factory=list)
+  variables: dict[str, Any] = field(default_factory=dict)
 
   @property
   def graphql(self):
@@ -706,18 +739,9 @@ class DataRequest:
   def single_document(doc: Document) -> DataRequest:
     return DataRequest([doc])
 
-
-def execute(request: DataRequest) -> list:
-  def f(doc: Document) -> dict:
-    match doc.variables:
-      case []:
-        return client.query(doc.url, doc.graphql)
-      case [args]:
-        return client.query(doc.url, doc.graphql, args)
-      case args_list:
-        return client.repeat(doc.url, doc.graphql, args_list)
-
-  return list(request.documents | map(f))
+  @staticmethod
+  def add_documents(self: DataRequest, docs: Document | list[Document]) -> DataRequest:
+    return DataRequest(list([self.documents, docs] | traverse))
 
   
 # ================================================================

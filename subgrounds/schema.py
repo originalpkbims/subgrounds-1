@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
 
+from pipe import where
+
 
 # ================================================================
 # Schema definitions, data structures and types
@@ -16,6 +18,16 @@ class TypeRef:
     def name(self) -> str:
       raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def is_list(self) -> str:
+      raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def is_non_null(self) -> str:
+      raise NotImplementedError
+
   @dataclass
   class Named(T):
     name_: str
@@ -23,6 +35,14 @@ class TypeRef:
     @property
     def name(self) -> str:
       return self.name_
+
+    @property
+    def is_list(self) -> str:
+      return False
+
+    @property
+    def is_non_null(self) -> str:
+      return False
 
   @dataclass
   class NonNull(T):
@@ -32,6 +52,14 @@ class TypeRef:
     def name(self) -> str:
       return self.inner.name
 
+    @property
+    def is_list(self) -> str:
+      return self.inner.is_list
+
+    @property
+    def is_non_null(self) -> str:
+      return True
+
   @dataclass
   class List(T):
     inner: TypeRef.T
@@ -40,13 +68,13 @@ class TypeRef:
     def name(self) -> str:
       return self.inner.name
 
-  @staticmethod
-  def root_type_name(type_: TypeRef.T) -> str:
-    match type_:
-      case TypeRef.NonNull(inner) | TypeRef.List(inner):
-        return TypeRef.root_type_name(inner)
-      case TypeRef.Named(name):
-        return name
+    @property
+    def is_list(self) -> str:
+      return True
+
+    @property
+    def is_non_null(self) -> str:
+      return self.inner.is_non_null
 
   @staticmethod
   def non_null(name: str) -> TypeRef.T:
@@ -57,20 +85,16 @@ class TypeRef:
     return TypeRef.NonNull(TypeRef.List(TypeRef.NonNull(TypeRef.Named(name))))
 
   @staticmethod
+  def root_type_name(type_: TypeRef.T) -> str:
+    return type_.name
+
+  @staticmethod
   def is_non_null(type_: TypeRef.T) -> bool:
-    match type_:
-      case TypeRef.NonNull():
-        return True
-      case _:
-        return False
+    return type_.is_non_null
 
   @staticmethod
   def is_list(type_: TypeRef.T) -> bool:
-    match type_:
-      case TypeRef.List() | TypeRef.NonNull(TypeRef.List()):
-        return True
-      case _:
-        return False
+    return type_.is_list
 
   @staticmethod
   def graphql(type_: TypeRef.T) -> str:
@@ -102,6 +126,13 @@ class TypeMeta:
   class FieldMeta(T):
     arguments: list[TypeMeta.ArgumentMeta]
     type_: TypeRef.T
+
+    def has_arg(self, argname: str) -> bool:
+      try:
+        next(self.arguments | where(lambda arg: arg.name == argname))
+        return True
+      except StopIteration:
+        return False
 
   @dataclass
   class ScalarMeta(T):
