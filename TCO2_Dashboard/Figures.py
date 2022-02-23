@@ -1,11 +1,4 @@
-
-from distutils.errors import CCompilerError
-from enum import auto
-from re import template
-from tkinter import font
-from unicodedata import name
 import pandas as pd
-from subgrounds.subgrounds import to_dataframe
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
@@ -31,25 +24,28 @@ def indicator_subsets(sd_pool,last_sd_pool,num):
 
     return fig
 
-def indicator_total(sd_pool):
-
+def indicator_total(df,df_retired,title,current_supply):
+    if current_supply == False:
+        value = sum(df['Quantity'])
+    else:
+        value = sum(df['Quantity']) - sum(df_retired['Quantity']) 
     fig = go.Figure()
     fig.add_trace(go.Indicator(
         mode = "number",
-        value = sum(sd_pool['Quantity']),
-        title=dict(text ="Credits tokenized (total)"),
+        value = value,
+        title=dict(text = title),
         number = dict(font=dict(size=52))))
     fig.update_layout(height=250,paper_bgcolor=colors['bg_color'],font_color='white')
 
     return fig
 
 
-def sub_plots_volume(sd_pool,last_sd_pool,num):
+def sub_plots_volume(sd_pool,last_sd_pool,title_indicator,title_graph):
     fig = make_subplots(
         rows=2, 
         cols=1,
         specs=[[{"type":"domain"}],[{"type":"xy"}]],
-        subplot_titles=("", "Tokenization Volumes By Day"),
+        subplot_titles=("", title_graph),
         vertical_spacing=0.1,
         )
     
@@ -58,7 +54,7 @@ def sub_plots_volume(sd_pool,last_sd_pool,num):
     fig.add_trace(go.Indicator(
         mode = "number+delta",
         value = sum(sd_pool['Quantity']),
-        title=dict(text =f"Credits tokenized ({num}d)"),
+        title=dict(text =title_indicator,font=dict(size=20)),
         number = dict(suffix = " tCO2",font=dict(size=52)),
         delta = {'position': "bottom", 'reference': sum(last_sd_pool['Quantity']), 'relative':True, 'valueformat':'.1%'},
         domain = {'x': [0.25, .75], 'y': [0.6, 1]}))
@@ -66,25 +62,25 @@ def sub_plots_volume(sd_pool,last_sd_pool,num):
 
     add_px_figure(
         px.bar(
-            sd_pool.groupby("Bridging Date")['Quantity'].sum().reset_index(), 
-            x="Bridging Date", 
+            sd_pool.groupby("Date")['Quantity'].sum().reset_index(), 
+            x="Date", 
             y="Quantity", 
-            title="Tokenization Volumes By Day",
+            title=title_graph,
             ),
         fig,
         row=2, col=1)
 
     fig.update_layout(height=600,paper_bgcolor=colors['bg_color'],plot_bgcolor=colors['bg_color'],xaxis=dict(showgrid=False),
-              yaxis=dict(showgrid=False))
+              yaxis=dict(showgrid=False),font_size=20)
     return fig
     
 
-def sub_plots_vintage(sd_pool,last_sd_pool,num):
+def sub_plots_vintage(sd_pool,last_sd_pool,title_indicator,title_graph):
     fig = make_subplots(
         rows=2, 
         cols=1,
         specs=[[ {"type":"domain"}],[ {"type":"xy"}]],
-        subplot_titles=("", f"Distribution of Vintages ({num}d)"),
+        subplot_titles=("", title_graph),
         vertical_spacing=0.1,
         )
     fig.update_layout(font_color='white')
@@ -94,7 +90,7 @@ def sub_plots_vintage(sd_pool,last_sd_pool,num):
         value = np.average(sd_pool['Vintage'],weights=sd_pool['Quantity']),
         number = dict(valueformat= ".1f",font=dict(size=52)),
         delta = {"reference": np.average(last_sd_pool['Vintage'],weights=last_sd_pool['Quantity']), "valueformat": ".1f"},
-        title=dict(text =f"Average Credit Vintage ({num}d)"),
+        title=dict(text =title_indicator,font=dict(size=20)),
         domain = {'x': [0.25, .75], 'y': [0.6, 1]}))
 
     add_px_figure(
@@ -102,16 +98,16 @@ def sub_plots_vintage(sd_pool,last_sd_pool,num):
             sd_pool.groupby('Vintage')['Quantity'].sum().to_frame().reset_index(), 
             x='Vintage', 
             y='Quantity', 
-            title=f'Distribution of Vintages ({num}d)'
+            title=title_graph
             ),
         fig,
         row=2, col=1
     )
     fig.update_layout(height=600,paper_bgcolor=colors['bg_color'],plot_bgcolor=colors['bg_color'],xaxis=dict(showgrid=False),
-              yaxis=dict(showgrid=False))
+              yaxis=dict(showgrid=False),font_size=20)
 
     return fig
-def map(df,num):
+def map(df,title):
     
     country_index = defaultdict(str,{country:pycountry.countries.search_fuzzy(country)[0].alpha_3 for country in df.Region.astype(str).unique() if country!='nan'})
     country_volumes = df.groupby('Region')['Quantity'].sum().sort_values(ascending=False).to_frame().reset_index()
@@ -123,13 +119,13 @@ def map(df,num):
                     height=600)
     
     fig.update_layout(geo=dict(bgcolor= 'rgba(0,0,0,0)', lakecolor='#4E5D6C',
-                                          landcolor='rgba(51,17,0,0.2)',
+                                          landcolor='darkgrey',
                                           subunitcolor='grey'),title=dict(
-    text=f'Where have the past {num}-day credits originated from?',
+    text=title,
     x=0.5,font=dict(
         color=colors['kg_color_sub2'],
         size=fonts['figure'])),
-    font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
+    font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'],font_size=20)
     return fig
 
 
@@ -139,29 +135,29 @@ def total_volume(sd_pool):
         cols=1,
         specs=[[{"type":"domain"}],[{"type":"xy"}]],
         vertical_spacing=0.1,
-        subplot_titles=( "", "Tokenization Volumes By Day")
+        subplot_titles=( "", "")
         )
     fig.update_layout(font_color='white')
 
     fig.add_trace(go.Indicator(
         mode = "number",
         value = sum(sd_pool['Quantity']),
-        title=dict(text ="Credits tokenized (total)"),
+        title=dict(text ="Credits tokenized (total)",font=dict(size=20)),
         number = dict(suffix = " tCO2",font=dict(size=52)),
         domain = {'x': [0.25, .75], 'y': [0.6, 1]}))
 
     add_px_figure(
         px.bar(
-            sd_pool.groupby("Bridging Date")['Quantity'].sum().reset_index(), 
-            x="Bridging Date", 
+            sd_pool.groupby("Date")['Quantity'].sum().reset_index(), 
+            x="Date", 
             y="Quantity", 
-            title="Tokenization Volumes By Day"
+            title=""
             ),
         fig,
         row=2, col=1)
 
     fig.update_layout(height=600,paper_bgcolor=colors['bg_color'],plot_bgcolor=colors['bg_color'],xaxis=dict(showgrid=False),
-              yaxis=dict(showgrid=False))
+              yaxis=dict(showgrid=False),font_size=20)
     return fig
 
 
@@ -171,7 +167,7 @@ def total_vintage(sd_pool):
         cols=1,
         specs=[[ {"type":"domain"}],[{"type":"xy"}]],
         vertical_spacing=0.1,
-        subplot_titles=("", "Distribution of Vintages")
+        subplot_titles=("", "")
         )
     fig.update_layout(font_color='white')
 
@@ -179,21 +175,21 @@ def total_vintage(sd_pool):
         mode = "number",
         value = np.average(sd_pool['Vintage'],weights=sd_pool['Quantity']),
         number = dict(valueformat= ".1f",font=dict(size=52)),
-        title=dict(text ="Average Credit Vintage (total)"),
+        title=dict(text ="Average Credit Vintage (total)",font=dict(size=20)),
         domain = {'x': [0.25, .75], 'y': [0.6, 1]}))
     add_px_figure(
         px.bar(
             sd_pool.groupby('Vintage')['Quantity'].sum().to_frame().reset_index(), 
             x='Vintage', 
             y='Quantity', 
-            title=f'Distribution of Vintages (total)'
+            title=''
             ),
         fig,
         row=2, col=1
     )
 
     fig.update_layout(height=600,paper_bgcolor=colors['bg_color'],plot_bgcolor=colors['bg_color'],xaxis=dict(showgrid=False),
-              yaxis=dict(showgrid=False))
+              yaxis=dict(showgrid=False),font_size=20)
     return fig
 
 def total_map(df):
@@ -211,10 +207,10 @@ def total_map(df):
                                           landcolor='rgba(51,17,0,0.2)',
                                           subunitcolor='grey'),title=dict(text="Where have all the past credits originated from?",
     x=0.5,font=dict(color=colors['kg_color_sub2'],size=fonts['figure'])),
-    font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'])
+    font_color='white',dragmode=False,paper_bgcolor=colors['bg_color'],font_size=20)
     return fig
 
-def region_volume_vs_date(df):
+def region_volume_vs_date(df,title):
     #List of Regions
     lst_reg = list(df["Region"].value_counts().index[:])
     palette = cycle(px.colors.cyclical.HSV)
@@ -227,18 +223,18 @@ def region_volume_vs_date(df):
     #Grouby weekly
     #line chart - based off weekly
     lst_reg_Quantity = [i+"_Quantity" for i in lst_reg]
-    qty_vs_date = df.groupby('Bridging Date')[["Quantity"] + lst_reg_Quantity].sum().reset_index()
-    qty_vs_date = qty_vs_date.sort_values(by='Bridging Date')
-    qty_vs_date["Bridging Date"]=pd.to_datetime(qty_vs_date["Bridging Date"])
-    qty_vs_date=qty_vs_date.resample('W',on='Bridging Date')[["Quantity"] + lst_reg_Quantity].sum().reset_index()
+    qty_vs_date = df.groupby('Date')[["Quantity"] + lst_reg_Quantity].sum().reset_index()
+    qty_vs_date = qty_vs_date.sort_values(by='Date')
+    qty_vs_date["Date"]=pd.to_datetime(qty_vs_date["Date"])
+    qty_vs_date=qty_vs_date.resample('W',on='Date')[["Quantity"] + lst_reg_Quantity].sum().reset_index()
 
     #Region_Quantity vs Time
     fig=go.Figure()
-    fig.add_trace(go.Scatter(x=qty_vs_date['Bridging Date'],y=qty_vs_date['Quantity'],name="Volume"))
+    fig.add_trace(go.Scatter(x=qty_vs_date['Date'],y=qty_vs_date['Quantity'],name="Volume"))
     for i in lst_reg_Quantity:
-        fig.add_trace(go.Bar(x=qty_vs_date['Bridging Date'],y=qty_vs_date[i],name=i.replace("_Quantity",""),marker_color=next(palette)))
+        fig.add_trace(go.Bar(x=qty_vs_date['Date'],y=qty_vs_date[i],name=i.replace("_Quantity",""),marker_color=next(palette)))
 
-    fig.update_layout(title=dict(text="What is the trend of Tokenized Credits Volume (Weekly)? <br> Which Regions' carbon credits are consistently tokenized?",
+    fig.update_layout(title=dict(text=title,
     x=0.5,y=0.95,font=dict(color=colors['kg_color_sub2'],size=fonts['figure'])),font_color='white',
                         xaxis_title = 'Date',
                         yaxis_title = 'Volume',
@@ -247,7 +243,20 @@ def region_volume_vs_date(df):
               yaxis=dict(showgrid=False))
     return fig
 
+
 def methodology_volume_vs_region(df):
+    fig = px.bar(
+            df.groupby('Methodology')['Quantity'].sum().to_frame().reset_index(), 
+            x='Methodology', 
+            y='Quantity', 
+            title=''
+            )
+    fig.update_layout(height=600,paper_bgcolor=colors['bg_color'],plot_bgcolor=colors['bg_color'],xaxis=dict(showgrid=False),
+              yaxis=dict(showgrid=False),font_color='white',font_size=20)
+
+    return fig
+
+def methodology_volume_vs_region_2(df):
     #List of Regions
     palette = cycle(px.colors.cyclical.HSV)
     lst_metho = list(df["Methodology"].value_counts().index[:])
@@ -267,7 +276,7 @@ def methodology_volume_vs_region(df):
     for i in lst_metho_Quantity:
         fig.add_trace(go.Bar(x=qty_vs_region['Region'],y=qty_vs_region[i],name=i.replace("_Quantity",""),marker_color=next(palette)))
 
-    fig.update_layout(title=dict(text="Methodology Distribution with respect to Region",
+    fig.update_layout(title=dict(text="",
     x=0.5,font=dict(color=colors['kg_color_sub2'],size=fonts['figure'])),font_color='white',
                         xaxis_title = 'Region',
                         yaxis_title = 'Volume',
@@ -294,20 +303,22 @@ def methodology_table(metho_dict):
 
 
 def pool_pie_chart(df):
-    labels = ['BCT','Non_BCT']
+    labels = ['BCT','NCT','TCO2']
     BCT = df['BCT Quantity'].sum()
-    Non_BCT = df['Bridged Quantity'].sum()-BCT
-    values = [BCT,Non_BCT]
+    NCT = df['NCT Quantity'].sum()
+    TCO2 = df['Total Quantity'].sum()-BCT-NCT
+    values = [BCT,NCT,TCO2]
     fig = go.Figure()
-    fig.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent'
-                             ))
-    fig.update_layout(title=dict(
-        text='BCT Composition based on Eligible TCO2',
-        x=0.5,
-        font=dict(
-            color=colors['kg_color_sub2'],size=20
-        )),
-        paper_bgcolor=colors['bg_color'])
+    fig.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent',textfont=dict(color='white',size=20)
+                             ,hoverlabel=dict(font_color='white',font_size=20),hole=.3))
+    fig.update_layout(
+        # title=dict(
+    #     # text='BCT Composition based on Eligible TCO2',
+    #     x=0.5,
+    #     font=dict(
+    #         color=colors['kg_color_sub2'],size=20
+    #     )),
+        paper_bgcolor=colors['bg_color'],font_color='white',font_size=20)
 
     return fig
 
@@ -316,18 +327,21 @@ def eligible_pool_pie_chart(df,pool_key):
         df = df[df["Vintage"]>=2008].reset_index()
     elif pool_key == "NCT": 
         df = df[df["Vintage"]>=2012].reset_index()
-    labels = [pool_key,f'Non_{pool_key}']
+    labels = [pool_key,f'NON_{pool_key}']
     BCT = df[f'{pool_key} Quantity'].sum()
-    Non_BCT = df['Bridged Quantity'].sum()-BCT
+    Non_BCT = df['Total Quantity'].sum()-BCT
     values = [BCT,Non_BCT]
     fig_eligible=go.Figure()
-    fig_eligible.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent'
-                            ))
-    fig_eligible.update_layout(title=dict(
-        text=f'How much of Eligible TCO2 is exchanged for {pool_key}?',
-        x=0.5,
-        font=dict(
-            color=colors['kg_color_sub2'],size=20
-        )),
-        paper_bgcolor=colors['bg_color'])
+    fig_eligible.add_trace(go.Pie(labels=labels, values=values,  textinfo='percent',textfont=dict(color='white',size=20)
+                             ,hoverlabel=dict(font_color='white',font_size=20),hole=.3))
+    fig_eligible.update_traces(marker=dict(colors=['red','green']))
+                            
+    fig_eligible.update_layout(
+        # title=dict(
+        # text=f'How much of Eligible TCO2 is exchanged for {pool_key}?',
+        # x=0.5,
+        # font=dict(
+        #     color=colors['kg_color_sub2'],size=20
+        # )),
+        paper_bgcolor=colors['bg_color'],font_color='white',font_size=20)
     return fig_eligible
